@@ -43,7 +43,7 @@ beforeEach(() => {
 	h.cue.setEnabled(true);
 });
 
-const run = (ms: number, extra: { aborted?: boolean; failed?: boolean; text?: string } = {}) => {
+const run = (ms: number, extra: { aborted?: boolean; failed?: boolean; text?: string; question?: string } = {}) => {
 	h.cue.runStart();
 	h.tick(ms);
 	h.cue.settled({ aborted: false, failed: false, ...extra });
@@ -64,6 +64,50 @@ test("short runs stay silent, failures never do", () => {
 	run(10 * S, { failed: true, text: "boom" });
 	h.tick(MIN);
 	expect(h.sent.map((n) => n.kind)).toEqual(["fail"]);
+});
+
+test("a quick reply right after you asked stays silent", () => {
+	h.cue.input();
+	run(5 * S, { text: "Sure" });
+	h.tick(MIN);
+	expect(h.sent).toEqual([]);
+});
+
+test("a quick wrap-up woken long after you left still taps, timed from your last key", () => {
+	// You hand off work, the agent dispatches a background subagent and stops.
+	h.cue.input();
+	run(5 * S, { text: "Dispatched" });
+	// Twenty minutes later the subagent wakes the agent for a 15s summary.
+	h.tick(20 * MIN);
+	run(15 * S, { text: "All done" });
+	h.tick(15 * S);
+	expect(h.sent).toEqual([{ kind: "done", elapsedMs: 20 * MIN + 20 * S, text: "All done" }]);
+});
+
+test("a reply that ends on a question taps as a decision", () => {
+	h.cue.input();
+	run(2 * MIN, { text: "Tests pass. Merge now?", question: "Merge now?" });
+	h.tick(7 * S);
+	expect(h.sent).toEqual([]);
+	h.tick(1 * S);
+	expect(h.sent).toEqual([{ kind: "ask", elapsedMs: 2 * MIN, text: "Merge now?" }]);
+	h.tick(10 * MIN);
+	expect(h.sent.map((n) => n.remind ?? false)).toEqual([false, true]);
+});
+
+test("a question asked while you are still here stays silent", () => {
+	h.cue.input();
+	run(5 * S, { question: "Which one?" });
+	h.tick(MIN);
+	expect(h.sent).toEqual([]);
+});
+
+test("a new run cancels a pending question tap", () => {
+	run(2 * MIN, { question: "Merge now?" });
+	h.tick(3 * S);
+	h.cue.runStart();
+	h.tick(MIN);
+	expect(h.sent).toEqual([]);
 });
 
 test("aborting with escape is you being here: no tap", () => {

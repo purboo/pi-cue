@@ -11,7 +11,7 @@ export type Kind = "done" | "fail" | "ask";
 
 export interface Note {
 	kind: Kind;
-	/** Run duration (done/fail) or time spent waiting (reminder). */
+	/** Time since you last touched pi (done/fail/ask), or time spent waiting (reminder). */
 	elapsedMs?: number;
 	/** One-line detail: result summary, error, or the question being asked. */
 	text?: string;
@@ -24,7 +24,10 @@ export interface Timing {
 	graceMs: number;
 	/** Wait before announcing a decision; shorter, because the agent is blocked. */
 	askGraceMs: number;
-	/** Runs shorter than this are not worth a cue (failures always are). */
+	/**
+	 * Only cue once you have been away this long, counted from your last key press,
+	 * so a quick wrap-up run woken by a background subagent still counts. Failures always cue.
+	 */
 	minRunMs: number;
 	/** Nudge once more if a decision is still open after this long. 0 = never. */
 	remindMs: number;
@@ -58,8 +61,11 @@ export interface Cue {
 	input(): void;
 	/** `agent_start`. */
 	runStart(): void;
-	/** `agent_settled`. */
-	settled(run: { aborted: boolean; failed: boolean; text?: string }): void;
+	/**
+	 * `agent_settled`. `question` is set when the reply ends by asking you something:
+	 * the ball is in your court, so it cues like a dialog does.
+	 */
+	settled(run: { aborted: boolean; failed: boolean; text?: string; question?: string }): void;
 	promptStart(title?: string): void;
 	promptEnd(): void;
 	/** New session in the same process: forget everything, touch nothing remote. */
@@ -72,7 +78,8 @@ export function createCue(deps: Deps, timing: Timing = DEFAULT_TIMING): Cue {
 	let startedAt: number | null = null;
 	let depth = 0;
 	let live = false;
-	let pending: { kind: Kind; cancel: () => void } | null = null;
+	/** `prompt`: waits on a dialog, so only the dialog closing resolves it, not a run boundary. */
+	let pending: { prompt: boolean; cancel: () => void } | null = null;
 	let cancelRemind: (() => void) | null = null;
 
 	const drop = () => {
@@ -88,7 +95,11 @@ export function createCue(deps: Deps, timing: Timing = DEFAULT_TIMING): Cue {
 		deps.withdraw();
 	};
 
-	const schedule = (graceMs: number, note: Note) => {
+	const dropRun = () => {
+		if (pending && !pending.prompt) drop();
+	};
+
+	const schedule = (graceMs: number, note: Note, prompt = false) => {
 		drop();
 		const at = deps.now();
 		const cancel = deps.after(graceMs, () => {
@@ -103,7 +114,7 @@ export function createCue(deps: Deps, timing: Timing = DEFAULT_TIMING): Cue {
 				});
 			}
 		});
-		pending = { kind: note.kind, cancel };
+		pending = { prompt, cancel };
 	};
 
 	return {
@@ -126,30 +137,34 @@ export function createCue(deps: Deps, timing: Timing = DEFAULT_TIMING): Cue {
 		runStart() {
 			// Runs can restart on retry; keep the first start so the duration is the whole run.
 			if (startedAt === null) startedAt = deps.now();
-			if (pending && pending.kind !== "ask") drop();
+			dropRun();
 			withdraw();
 		},
 
-		settled({ aborted, failed, text }) {
+		settled({ aborted, failed, text, question }) {
 			const started = startedAt;
 			startedAt = null;
-			if (pending && pending.kind !== "ask") drop();
+			dropRun();
 			if (!enabled || aborted) return;
-			const elapsedMs = started === null ? 0 : deps.now() - started;
-			if (!failed && elapsedMs < timing.minRunMs) return;
-			schedule(timing.graceMs, { kind: failed ? "fail" : "done", elapsedMs, text });
+			const now = deps.now();
+			const since = Number.isFinite(lastInput) ? lastInput : (started ?? now);
+			const elapsedMs = now - since;
+			if (failed) return schedule(timing.graceMs, { kind: "fail", elapsedMs, text });
+			if (elapsedMs < timing.minRunMs) return;
+			if (question) return schedule(timing.askGraceMs, { kind: "ask", elapsedMs, text: question });
+			schedule(timing.graceMs, { kind: "done", elapsedMs, text });
 		},
 
 		promptStart(title) {
 			depth += 1;
 			if (!enabled || depth > 1) return;
-			schedule(timing.askGraceMs, { kind: "ask", text: title });
+			schedule(timing.askGraceMs, { kind: "ask", text: title }, true);
 		},
 
 		promptEnd() {
 			depth = Math.max(0, depth - 1);
 			if (depth > 0) return;
-			if (pending?.kind === "ask") drop();
+			if (pending?.prompt) drop();
 			withdraw();
 		},
 

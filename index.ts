@@ -7,7 +7,7 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { type Config, loadConfig, parseKey, push, remove, saveKey } from "./src/bark.ts";
 import { type Cue, createCue, isHumanKey, type Note } from "./src/core.ts";
-import { isChinese, render, repoName } from "./src/text.ts";
+import { isChinese, question, render, repoName } from "./src/text.ts";
 
 const ENTRY = "pi-cue";
 const STATUS = "cue";
@@ -103,7 +103,12 @@ export default function piCue(pi: ExtensionAPI): void {
 
 	pi.on("agent_settled", (e, ctx) => {
 		cwd = ctx.cwd;
-		cue.settled({ aborted: e.aborted, failed: last.failed, text: last.text });
+		cue.settled({
+			aborted: e.aborted,
+			failed: last.failed,
+			text: last.text,
+			question: last.failed ? undefined : question(last.text),
+		});
 	});
 
 	pi.on("ui_prompt_start", (e) => cue.promptStart(e.title));

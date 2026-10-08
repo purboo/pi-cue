@@ -29,12 +29,18 @@ While on, `cue` shows in the status line.
 
 | | When | Level |
 |---|---|---|
-| `● repo` · Needs you | pi waits on a confirm / select / input for 8s | time-sensitive |
+| `● repo` · Needs you | pi waits on a confirm / select / input for 8s, or the reply ends on a question | time-sensitive |
 | `● repo` · Still waiting | the same decision is still open after 10 min (once) | time-sensitive |
 | `✗ repo` · Failed | a run failed | time-sensitive |
-| `✓ repo` · Done · 3m12s | a run of 30s or more finished, 15s ago | normal |
+| `✓ repo` · Done · 3m12s | pi stopped 15s ago, and you had been away 30s or more | normal |
 
-The body is the question, the error, or the first line of the answer.
+The body is the question, the error, or the first line of the answer. The time is how long since you last touched pi.
+
+## Background subagents
+
+When a background subagent wakes the agent for a quick wrap-up, that still cues: away time counts from your last key press, not from the start of the run. A subagent's question, relayed by the agent as a reply ending in `?`, cues as *Needs you*.
+
+pi does not tell extensions about background work, so the turn that dispatches subagents cues once as *Done* (the body usually says what was dispatched), and each subagent that wakes the agent replaces that notification and taps again.
 
 ## Quiet by design
 
@@ -62,7 +68,7 @@ The Watch only gets iPhone notifications while the iPhone is locked.
 }
 ```
 
-`"default": "on"` (or `PI_CUE=1`) starts new sessions with cues on. `"detail": false` sends only the project and state, never text from the session; worth it on the public Bark server. `remindMs: 0` disables the reminder.
+`"default": "on"` (or `PI_CUE=1`) starts new sessions with cues on. `"detail": false` sends only the project and state, never text from the session; worth it on the public Bark server. `remindMs: 0` disables the reminder. `minRunMs` is the away time needed before *Done* or a question cues.
 
 ## Development
 

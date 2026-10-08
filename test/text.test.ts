@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { parseKey } from "../src/bark.ts";
-import { duration, oneLine, render } from "../src/text.ts";
+import { duration, oneLine, question, render } from "../src/text.ts";
 
 test("duration", () => {
 	expect([0, 45_000, 134_000, 180_000, 3_780_000, 7_200_000].map(duration)).toEqual(["0s", "45s", "2m14s", "3m", "1h3m", "2h"]);
@@ -11,6 +11,15 @@ test("oneLine takes the first real line without markdown noise", () => {
 	expect(oneLine("- `fix` the bug")).toBe("fix the bug");
 	expect(oneLine("")).toBe("");
 	expect(oneLine("x".repeat(200), 10)).toBe("xxxxxxxxx…");
+});
+
+test("question picks the sentence a reply ends on, only if it asks", () => {
+	expect(question("Tests pass.\n\nShould I **merge** it now?")).toBe("Should I merge it now?");
+	expect(question("改好了。要不要发一版新的？")).toBe("要不要发一版新的？");
+	expect(question("Done. Want me to push it (y/n)?)")).toBe("Want me to push it (y/n)?");
+	expect(question("Why did it fail? Because of X.")).toBeUndefined();
+	expect(question("All green.")).toBeUndefined();
+	expect(question(undefined)).toBeUndefined();
 });
 
 test("render: done is calm, decisions are time sensitive", () => {
