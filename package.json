@@ -1,7 +1,7 @@
 {
   "name": "pi-cue",
   "version": "0.1.2",
-  "description": "A tap on your wrist when pi is done, or needs you. Bark push to iPhone and Apple Watch, only when you are away.",
+  "description": "Get a notification on your iPhone (and Apple Watch) when pi is done or needs you, only when you are away. Uses Bark.",
   "type": "module",
   "license": "MIT",
   "author": "purboo",

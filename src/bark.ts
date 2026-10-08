@@ -98,7 +98,7 @@ async function post(cfg: Config, payload: Record<string, unknown>, fetcher: type
 		});
 		return res.ok;
 	} catch {
-		return false; // best effort: a missed tap must never disturb pi
+		return false; // best effort: a missed notification must never disturb pi
 	}
 }
 

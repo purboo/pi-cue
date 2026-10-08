@@ -49,7 +49,7 @@ const run = (ms: number, extra: { aborted?: boolean; failed?: boolean; text?: st
 	h.cue.settled({ aborted: false, failed: false, ...extra });
 };
 
-test("a long run that ends while you are away taps after the grace period", () => {
+test("a long run that ends while you are away notifies after the grace period", () => {
 	run(2 * MIN, { text: "All green" });
 	h.tick(14 * S);
 	expect(h.sent).toEqual([]);
@@ -73,7 +73,7 @@ test("a quick reply right after you asked stays silent", () => {
 	expect(h.sent).toEqual([]);
 });
 
-test("a quick wrap-up woken long after you left still taps, timed from your last key", () => {
+test("a quick wrap-up woken long after you left still notifies, timed from your last key", () => {
 	// You hand off work, the agent dispatches a background subagent and stops.
 	h.cue.input();
 	run(5 * S, { text: "Dispatched" });
@@ -84,7 +84,7 @@ test("a quick wrap-up woken long after you left still taps, timed from your last
 	expect(h.sent).toEqual([{ kind: "done", elapsedMs: 20 * MIN + 20 * S, text: "All done" }]);
 });
 
-test("a reply that ends on a question taps as a decision", () => {
+test("a reply that ends on a question notifies as a decision", () => {
 	h.cue.input();
 	run(2 * MIN, { text: "Tests pass. Merge now?", question: "Merge now?" });
 	h.tick(7 * S);
@@ -102,7 +102,7 @@ test("a question asked while you are still here stays silent", () => {
 	expect(h.sent).toEqual([]);
 });
 
-test("a new run cancels a pending question tap", () => {
+test("a new run cancels a pending question notification", () => {
 	run(2 * MIN, { question: "Merge now?" });
 	h.tick(3 * S);
 	h.cue.runStart();
@@ -110,13 +110,13 @@ test("a new run cancels a pending question tap", () => {
 	expect(h.sent).toEqual([]);
 });
 
-test("aborting with escape is you being here: no tap", () => {
+test("aborting with escape is you being here: no notification", () => {
 	run(2 * MIN, { aborted: true });
 	h.tick(MIN);
 	expect(h.sent).toEqual([]);
 });
 
-test("typing during the grace period cancels the tap", () => {
+test("typing during the grace period cancels the notification", () => {
 	run(2 * MIN);
 	h.tick(5 * S);
 	h.cue.input();
@@ -141,7 +141,7 @@ test("typing long before the run ends does not", () => {
 	expect(h.sent.length).toBe(1);
 });
 
-test("a new run cancels a pending tap and clears one already sent", () => {
+test("a new run cancels a pending notification and clears one already sent", () => {
 	run(2 * MIN);
 	h.tick(5 * S);
 	h.cue.runStart();
@@ -155,7 +155,7 @@ test("a new run cancels a pending tap and clears one already sent", () => {
 	expect(h.withdrawn()).toBe(1);
 });
 
-test("a decision taps after its shorter grace, and is withdrawn once answered", () => {
+test("a decision notifies after its shorter grace, and is withdrawn once answered", () => {
 	h.cue.promptStart("Delete the branch?");
 	h.tick(7 * S);
 	expect(h.sent).toEqual([]);
@@ -191,7 +191,7 @@ test("answering cancels the reminder", () => {
 	expect(h.sent.length).toBe(1);
 });
 
-test("typing after a tap takes it off the phone, once", () => {
+test("typing after a notification takes it off the phone, once", () => {
 	run(2 * MIN);
 	h.tick(15 * S);
 	h.cue.input();

@@ -1,8 +1,8 @@
 # pi-cue
 
-**A tap on your wrist when pi is done, or needs you.**
+**A notification on your iPhone when pi is done, or needs you.**
 
-Pushes to your iPhone and Apple Watch through [Bark](https://github.com/Finb/Bark), but only when you are away. If you are at the keyboard, nothing happens.
+Sent through [Bark](https://github.com/Finb/Bark), and only when you are away: if you are at the keyboard, nothing happens. While the iPhone is locked, it reaches your Apple Watch too.
 
 ## Setup
 
@@ -14,7 +14,7 @@ The key is stored in `~/.pi/agent/cue.json` (mode 600). `PI_CUE_KEY` and `PI_CUE
 
 ## Use
 
-Cues are **off** in every session until you turn them on, so parallel sessions don't all tap you.
+Cues are **off** in every session until you turn them on, so parallel sessions don't all notify you.
 
 | | |
 |---|---|
@@ -40,7 +40,7 @@ The body is the question, the error, or the first line of the answer. The time i
 
 When a background subagent wakes the agent for a quick wrap-up, that still cues: away time counts from your last key press, not from the start of the run. A subagent's question, relayed by the agent as a reply ending in `?`, cues as *Needs you*.
 
-pi does not tell extensions about background work, so the turn that dispatches subagents cues once as *Done* (the body usually says what was dispatched), and each subagent that wakes the agent replaces that notification and taps again.
+pi does not tell extensions about background work, so the turn that dispatches subagents cues once as *Done* (the body usually says what was dispatched), and each subagent that wakes the agent replaces that notification and alerts again.
 
 ## Quiet by design
 
@@ -48,8 +48,6 @@ pi does not tell extensions about background work, so the turn that dispatches s
 - **One per session.** Each session replaces its own notification instead of stacking.
 - **Cleans up.** Answering, typing, starting a new run, or quitting removes the notification from the phone and watch. Removal needs Bark's *Background App Refresh*.
 - **Never in the way.** Network errors are swallowed. Nested and headless sessions never cue.
-
-The Watch only gets iPhone notifications while the iPhone is locked.
 
 ## Config
 
