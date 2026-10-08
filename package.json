@@ -1,6 +1,6 @@
 {
   "name": "pi-cue",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A tap on your wrist when pi is done, or needs you. Bark push to iPhone and Apple Watch, only when you are away.",
   "type": "module",
   "license": "MIT",

@@ -34,19 +34,39 @@ export function duration(ms: number): string {
 }
 
 /** First meaningful line, stripped of markdown noise, cut to `max` characters. */
+const clean = (raw: string) =>
+	raw
+		.replace(/^\s*(?:#{1,6}|>|[-*+]|\d+[.)])\s+/, "")
+		.replace(/[`*_~]/g, "")
+		.replace(/\s+/g, " ")
+		.trim();
+
+const clip = (line: string, max: number) => {
+	const chars = Array.from(line);
+	return chars.length <= max ? line : `${chars.slice(0, max - 1).join("").trimEnd()}…`;
+};
+
 export function oneLine(text: string | undefined, max = 90): string {
 	if (!text) return "";
 	for (const raw of text.split(/\r?\n/)) {
-		const line = raw
-			.replace(/^\s*(?:#{1,6}|>|[-*+]|\d+[.)])\s+/, "")
-			.replace(/[`*_~]/g, "")
-			.replace(/\s+/g, " ")
-			.trim();
-		if (!line) continue;
-		const chars = Array.from(line);
-		return chars.length <= max ? line : `${chars.slice(0, max - 1).join("").trimEnd()}…`;
+		const line = clean(raw);
+		if (line) return clip(line, max);
 	}
 	return "";
+}
+
+/**
+ * The question a reply ends on, if it ends on one: "Merge it now?" at the end means
+ * the agent is waiting for you even though no dialog opened. Heuristic by design.
+ */
+export function question(text: string | undefined, max = 90): string | undefined {
+	if (!text) return undefined;
+	const lines = text.split(/\r?\n/).map(clean).filter(Boolean);
+	const last = lines.at(-1)?.replace(/[\s)）"'”’]+$/, "");
+	if (!last || !/[?？]$/.test(last)) return undefined;
+	// Keep only the final sentence of a long line.
+	const sentence = last.split(/(?<=[.!。！？?])\s*/).filter(Boolean).at(-1) ?? last;
+	return clip(sentence, max);
 }
 
 export function repoName(cwd: string): string {
