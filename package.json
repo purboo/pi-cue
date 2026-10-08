@@ -1,0 +1,47 @@
+{
+  "name": "pi-cue",
+  "version": "0.1.0",
+  "description": "A tap on your wrist when pi is done, or needs you. Bark push to iPhone and Apple Watch, only when you are away.",
+  "type": "module",
+  "license": "MIT",
+  "author": "purboo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/purboo/pi-cue.git"
+  },
+  "homepage": "https://github.com/purboo/pi-cue#readme",
+  "bugs": {
+    "url": "https://github.com/purboo/pi-cue/issues"
+  },
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "notification",
+    "bark",
+    "apple-watch"
+  ],
+  "files": [
+    "index.ts",
+    "src"
+  ],
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "check": "tsc --noEmit && bun test",
+    "link-pi": "D=\"$(dirname \"$(readlink -f \"$(command -v pi)\")\")/../../..\" && mkdir -p node_modules/@earendil-works && for p in pi-ai pi-coding-agent pi-tui; do ln -sfn \"$(cd \"$D/$p\" && pwd)\" node_modules/@earendil-works/$p; done"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "typescript": "5"
+  }
+}
