@@ -2,7 +2,7 @@
  * The decision logic, free of pi and the network. Everything time-related and
  * every side effect is injected, so it can be tested with a fake clock.
  *
- * The rule of thumb: a cue is a tap on the wrist, so it must only fire when
+ * The rule of thumb: a cue interrupts you, so it must only fire when
  * you are away. Every cue therefore waits a grace period, and is dropped if
  * you touched the keyboard around that time or the situation resolved itself.
  */

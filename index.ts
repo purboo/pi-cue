@@ -1,5 +1,5 @@
 /**
- * pi-cue: a tap on the wrist when pi is done, or needs you.
+ * pi-cue: a phone notification when pi is done, or needs you.
  *
  * Off by default per session; `/cue` turns it on for the current one.
  * All logic lives in src/core.ts; this file only wires pi events to it.
@@ -42,7 +42,7 @@ export default function piCue(pi: ExtensionAPI): void {
 			now: Date.now,
 			after(ms, fn) {
 				const t = setTimeout(fn, ms);
-				t.unref?.(); // never keep pi alive for a tap
+				t.unref?.(); // never keep pi alive for a notification
 				return () => clearTimeout(t);
 			},
 			send(note: Note) {
@@ -77,7 +77,7 @@ export default function piCue(pi: ExtensionAPI): void {
 		cwd = ctx.cwd;
 		sessionId = ctx.sessionManager.getSessionId().slice(0, 8);
 		last = { failed: false, text: "" };
-		if (!ctx.hasUI) return; // nested and headless sessions never tap
+		if (!ctx.hasUI) return; // nested and headless sessions never notify
 		unlisten = ctx.ui.onTerminalInput((data) => {
 			if (isHumanKey(data)) cue.input();
 			return undefined;
@@ -135,11 +135,11 @@ export default function piCue(pi: ExtensionAPI): void {
 		cue.setEnabled(on);
 		pi.appendEntry(ENTRY, { on });
 		showStatus(ctx);
-		say(ctx, on ? (zh ? "cue 已开启:完成或需要你时会推送" : "cue on: you will be tapped when pi is done or needs you") : zh ? "cue 已关闭" : "cue off");
+		say(ctx, on ? (zh ? "cue 已开启:完成或需要你时会推送" : "cue on: you will be notified when pi is done or needs you") : zh ? "cue 已关闭" : "cue off");
 	};
 
 	pi.registerCommand("cue", {
-		description: "Tap on the wrist when pi is done or needs you (on | off | test | key <key>)",
+		description: "Notify your phone when pi is done or needs you (on | off | test | key <key>)",
 		getArgumentCompletions: (prefix) =>
 			["on", "off", "test", "key", "status"].filter((s) => s.startsWith(prefix)).map((s) => ({ value: s, label: s })),
 		handler: async (args, ctx) => {
@@ -161,7 +161,7 @@ export default function piCue(pi: ExtensionAPI): void {
 				case "test": {
 					if (!cfg.key) return say(ctx, zh ? "还没有 key,先运行 /cue key" : "No key yet. Run /cue key first.", "warning");
 					// Always English: a test is often sent to show someone else what a cue looks like.
-					const m = render({ kind: "done", elapsedMs: 83_000, text: "Test cue from pi. Your wrist is wired up." }, cwd, { zh: false, detail: true });
+					const m = render({ kind: "done", elapsedMs: 83_000, text: "Test notification from pi-cue. You are all set." }, cwd, { zh: false, detail: true });
 					const ok = await push(cfg, { id: `${id()}-test`, group: repoName(cwd), ...m });
 					return say(ctx, ok ? (zh ? "已发送" : "Sent") : zh ? "发送失败,检查 key 和网络" : "Send failed; check the key and network", ok ? "info" : "error");
 				}
