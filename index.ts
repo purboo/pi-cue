@@ -160,7 +160,8 @@ export default function piCue(pi: ExtensionAPI): void {
 				}
 				case "test": {
 					if (!cfg.key) return say(ctx, zh ? "还没有 key,先运行 /cue key" : "No key yet. Run /cue key first.", "warning");
-					const m = render({ kind: "done", elapsedMs: 83_000, text: zh ? "这是一条测试" : "This is a test" }, cwd, { zh, detail: true });
+					// Always English: a test is often sent to show someone else what a cue looks like.
+					const m = render({ kind: "done", elapsedMs: 83_000, text: "Test cue from pi. Your wrist is wired up." }, cwd, { zh: false, detail: true });
 					const ok = await push(cfg, { id: `${id()}-test`, group: repoName(cwd), ...m });
 					return say(ctx, ok ? (zh ? "已发送" : "Sent") : zh ? "发送失败,检查 key 和网络" : "Send failed; check the key and network", ok ? "info" : "error");
 				}
